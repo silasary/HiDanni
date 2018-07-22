@@ -29,12 +29,13 @@ async def on_message(message: Message) -> None:
         if len(name) > 32:
             name = name.rsplit('.', 1)[0]
             name = name.strip(' .!,')
+        nname = name
         if len(name) > 32:
-            name = name[:31]
-            name = name.strip(' .!,')
-        # if message.author.
+            nname = name[:31]
+            nname = nname.strip(' .!,')
+        # Discord says that Server Admin is immune 😭
         try:
-            await BOT.client.change_nickname(message.author, name)
+            await BOT.client.change_nickname(message.author, nname)
         except discord.Forbidden:
             pass
         await BOT.client.send_message(message.channel, f"Hi {name}, I'm Danni")
