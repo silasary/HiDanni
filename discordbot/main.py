@@ -25,7 +25,8 @@ async def on_message(message: Message) -> None:
     m = re.search(r"\b(?:I'?m|I am)\W+([\w\W]+)", message.content, re.IGNORECASE)
     if m:
         name = m.group(1)
-        name = name.strip(' .!,)').title()
+        name = name.strip(' .!,)')
+        name = name[0].upper() + name[1:]
         if len(name) > 32:
             name = name.rsplit('.', 1)[0]
             name = name.strip(' .!,')
