@@ -6,26 +6,34 @@ from typing import Dict
 import discord
 from discord.message import Message
 from discord.errors import Forbidden
+from discord.user import User
 
 from shared import configuration
+from shared.limited_dict import LimitedSizeDict
+
 
 class Bot:
     def __init__(self) -> None:
         self.client = discord.Client()
+        self.cache: Dict[User, str] = LimitedSizeDict(size_limit=500)
 
     def init(self) -> None:
         self.client.run(configuration.get('token'))
 
 BOT = Bot()
+REGEX_IM = r"\b(?:I'?m|I am)\W+([\w\W]+)"
 
 @BOT.client.event
 async def on_message(message: Message) -> None:
     if message.author == BOT.client.user:
         return
-    m = re.search(r"\b(?:I'?m|I am)\W+([\w\W]+)", message.content, re.IGNORECASE)
+    m = re.search(REGEX_IM, message.content, re.IGNORECASE)
+    if not m:
+        m = re.search(REGEX_IM, BOT.cache.get(message.author, '') + ' ' + message.content, re.IGNORECASE)
+        BOT.cache[message.author] = message.content
     if m:
         name = m.group(1)
-        name = name.strip(' .!,)')
+        name = name.strip(' .!,)?')
         name = name[0].upper() + name[1:]
         if len(name) > 32:
             name = name.rsplit('.', 1)[0]
