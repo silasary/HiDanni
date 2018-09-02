@@ -27,10 +27,10 @@ REGEX_IM = r"\b(?:I'?m|I am)\W+([\w\W]+)"
 async def on_message(message: Message) -> None:
     if message.author == BOT.client.user:
         return
-    m = re.search(REGEX_IM, message.content, re.IGNORECASE)
+    m = re.search(REGEX_IM, message.clean_content, re.IGNORECASE)
     if not m:
-        m = re.search(REGEX_IM, BOT.cache.get(message.author, '') + ' ' + message.content, re.IGNORECASE)
-        BOT.cache[message.author] = message.content
+        m = re.search(REGEX_IM, BOT.cache.get(message.author, '') + ' ' + message.clean_content, re.IGNORECASE)
+        BOT.cache[message.author] = message.clean_content
     if m:
         name = m.group(1)
         name = name.strip(' .!,)?')
