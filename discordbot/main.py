@@ -1,11 +1,10 @@
-import sys
 import re
-
+import sys
 from typing import Dict
 
 import discord
-from discord.message import Message
 from discord.errors import Forbidden
+from discord.message import Message
 from discord.user import User
 
 from shared import configuration
@@ -22,6 +21,8 @@ class Bot:
 
 BOT = Bot()
 REGEX_IM = r"\b(?:I'?m|I am)\W+([\w\W]+)"
+STRIP_CHARS = ' .!,)?*'
+REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
 @BOT.client.event
 async def on_message(message: Message) -> None:
@@ -33,15 +34,16 @@ async def on_message(message: Message) -> None:
         BOT.cache[message.author] = message.clean_content
     if m:
         name = m.group(1)
-        name = name.strip(' .!,)?')
+        name = name.strip(STRIP_CHARS)
+        name = make_positive(name)
         name = name[0].upper() + name[1:]
         if len(name) > 32:
             name = name.rsplit('.', 1)[0]
-            name = name.strip(' .!,')
+            name = name.strip(STRIP_CHARS)
         nname = name
         if len(name) > 32:
             nname = name[:31]
-            nname = nname.strip(' .!,')
+            nname = nname.strip(STRIP_CHARS)
         # Discord says that Server Admin is immune 😭
         try:
             await BOT.client.change_nickname(message.author, nname)
@@ -53,6 +55,12 @@ async def on_message(message: Message) -> None:
         await BOT.client.send_message(message.channel, 'Rebooting!')
         await BOT.client.logout()
         sys.exit()
+
+def make_positive(nname: str) -> str:
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'not cute', 'really cute', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'f?ugly', 'beautiful', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'gross', 'beautiful', nname, flags=re.I)
+    return nname
 
 @BOT.client.event
 async def on_ready() -> None:
