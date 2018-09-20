@@ -58,8 +58,11 @@ async def on_message(message: Message) -> None:
 
 def make_positive(nname: str) -> str:
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'not cute', 'really cute', nname, flags=re.I)
-    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'f?ugly', 'beautiful', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'(f?ugly|hideous|garbage)', 'beautiful', nname, flags=re.I)
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'gross', 'beautiful', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'awful', 'lovely', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'dumb', 'brilliant', nname, flags=re.I)
+
     return nname
 
 @BOT.client.event
