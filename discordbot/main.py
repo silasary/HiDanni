@@ -62,6 +62,7 @@ def make_positive(nname: str) -> str:
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'gross', 'beautiful', nname, flags=re.I)
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'awful', 'lovely', nname, flags=re.I)
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'dumb', 'brilliant', nname, flags=re.I)
+    nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'useless', 'valuable', nname, flags=re.I)
 
     return nname
 
