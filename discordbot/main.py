@@ -1,5 +1,7 @@
+import datetime
 import re
 import sys
+import random
 from typing import Dict
 
 import discord
@@ -10,11 +12,12 @@ from discord.user import User
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
 
-
 class Bot:
     def __init__(self) -> None:
         self.client = discord.Client()
         self.cache: Dict[User, str] = LimitedSizeDict(size_limit=500)
+        t = datetime.timedelta(hours=2)
+        self.next_meow = datetime.datetime.now() + t
 
     def init(self) -> None:
         self.client.run(configuration.get('token'))
@@ -50,11 +53,19 @@ async def on_message(message: Message) -> None:
         except discord.Forbidden:
             pass
         await BOT.client.send_message(message.channel, f"Hi {name}, I'm Danni")
+        return
 
     if message.content == '!restartbot':
         await BOT.client.send_message(message.channel, 'Rebooting!')
         await BOT.client.logout()
         sys.exit()
+
+    diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
+    if diff > 0:
+        await BOT.client.send_message(message.channel, 'meow')
+        t = datetime.timedelta(days=random.randrange(2,7), hours=random.randrange(6,23))
+        BOT.next_meow = datetime.datetime.now() + t
+        return
 
 def make_positive(nname: str) -> str:
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'not cute', 'really cute', nname, flags=re.I)
