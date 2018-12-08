@@ -1,7 +1,7 @@
 import datetime
+import random
 import re
 import sys
-import random
 from typing import Dict
 
 import discord
@@ -11,6 +11,7 @@ from discord.user import User
 
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
+
 
 class Bot:
     def __init__(self) -> None:
@@ -23,7 +24,7 @@ class Bot:
         self.client.run(configuration.get('token'))
 
 BOT = Bot()
-REGEX_IM = r"\b(?:I'?m|I ?am)\W+([\w\W]+)"
+REGEX_IM = r"\b(?:I['’]?m|I ?am)\W+([\w\W]+)"
 STRIP_CHARS = ' .!,)?*'
 REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
@@ -59,6 +60,9 @@ async def on_message(message: Message) -> None:
         await BOT.client.send_message(message.channel, 'Rebooting!')
         await BOT.client.logout()
         sys.exit()
+
+    if message.content == '!meow':
+        await BOT.client.send_message(message.channel, 'No you')
 
     diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
     if diff > 0:
