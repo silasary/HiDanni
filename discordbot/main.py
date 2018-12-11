@@ -56,6 +56,9 @@ async def on_message(message: Message) -> None:
         await BOT.client.send_message(message.channel, f"Hi {name}, I'm Danni")
         return
 
+    if message.content.lower() == 'owo' and message.author.id == '225711751071662082':
+        await BOT.client.send_file(message.channel, 'tove.jpg')
+
     if message.content == '!restartbot':
         await BOT.client.send_message(message.channel, 'Rebooting!')
         await BOT.client.logout()
