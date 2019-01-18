@@ -24,7 +24,7 @@ class Bot:
         self.client.run(configuration.get('token'))
 
 BOT = Bot()
-REGEX_IM = r"\b(?:I['’\"]?m|I ?am|ℹ\w?♏|🇮\w?🇲)\W+([\w\W]+)"
+REGEX_IM = r"\b(?:I['’\"]?m|I ?am|I is|ℹ\w?♏|🇮\w?🇲)\W+([\w\W]+)"
 STRIP_CHARS = ' .!,)?*~'
 REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
@@ -37,7 +37,8 @@ async def on_message(message: Message) -> None:
         m = re.search(REGEX_IM, BOT.cache.get(message.author, '') + ' ' + message.clean_content, re.IGNORECASE)
         BOT.cache[message.author] = message.clean_content
     if m:
-        name = m.group(1)
+        i_is = m.group(1).endswith(' is')
+        name = m.group(2)
         name = name.strip(STRIP_CHARS)
         name = make_positive(name)
         name = name[0].upper() + name[1:]
@@ -53,6 +54,10 @@ async def on_message(message: Message) -> None:
             await BOT.client.change_nickname(message.author, nname)
         except discord.Forbidden:
             pass
+        if i_is:
+            await BOT.client.send_message(message.channel, f"Yes, you are {name}")
+            return
+
         await BOT.client.send_message(message.channel, f"Hi {name}, I'm Danni")
         return
 
