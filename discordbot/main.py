@@ -24,7 +24,7 @@ class Bot:
         self.client.run(configuration.get('token'))
 
 BOT = Bot()
-REGEX_IM = r"\b(?:I['’\"]?m|I ?am|I is|ℹ\w?♏|🇮\w?🇲)\W+([\w\W]+)"
+REGEX_IM = r"\b(I['’\"]?m|I ?am|I is|ℹ ?♏|🇮 ?🇲)\W+([\w\W]+)"
 STRIP_CHARS = ' .!,)?*~'
 REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
