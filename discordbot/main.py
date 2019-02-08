@@ -24,8 +24,14 @@ class Bot:
         self.client.run(configuration.get('token'))
 
 BOT = Bot()
-REGEX_IM = r"\b(I['’\"]?m|I ?am|I is|ℹ ?♏|🇮 ?🇲)\W+([\w\W]+)"
-STRIP_CHARS = ' .!,)?*~'
+REGEXP_I = r'[Iℹ🇮]'
+REGEXP_APOS = r"['’\" ]?"
+REGEXP_M = r'[m♏🇲]'
+REGEXP_AM = r'(am|is)'
+
+REGEX_IM = r"\b(" + REGEXP_I + REGEXP_APOS + REGEXP_M + r"|" + REGEXP_I + r"\W" + REGEXP_AM +  r")\W+(?P<name>[\w\W]+)"
+REGEX_AM = r''
+STRIP_CHARS = ' .!,)?*~|'
 REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
 @BOT.client.event
@@ -38,12 +44,15 @@ async def on_message(message: Message) -> None:
         BOT.cache[message.author] = message.clean_content
     if m:
         i_is = m.group(1).endswith(' is')
-        name = m.group(2)
+        name = m.group('name')
         name = name.strip(STRIP_CHARS)
         name = make_positive(name)
         name = name[0].upper() + name[1:]
         if len(name) > 32:
-            name = name.rsplit('.', 1)[0]
+            splits = name.rsplit('.')
+            while len(splits) > 1 and len('.'.join(splits[:-1])) > 32:
+                splits = splits[:-1]
+            name = '.'.join(splits)
             name = name.strip(STRIP_CHARS)
         nname = name
         if len(name) > 32:
