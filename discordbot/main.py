@@ -7,6 +7,7 @@ from typing import Dict
 import discord
 from discord.errors import Forbidden
 from discord.message import Message
+from discord.reaction import Reaction
 from discord.user import User
 
 from shared import configuration
@@ -22,6 +23,17 @@ class Bot:
 
     def init(self) -> None:
         self.client.run(configuration.get('token'))
+
+    def get_yeet(self) -> Reaction:
+        yeets = []
+        for emoji in self.client.emojis:
+            if emoji.name.startswith('yeet'):
+                yeets.append(emoji)
+        if not yeets:
+            return None
+        random.shuffle(yeets)
+        print(yeets)
+        return yeets[0]
 
 BOT = Bot()
 REGEXP_I = r'[Iℹ🇮]'
@@ -60,30 +72,35 @@ async def on_message(message: Message) -> None:
             nname = nname.strip(STRIP_CHARS)
         # Discord says that Server Admin is immune 😭
         try:
-            await BOT.client.change_nickname(message.author, nname)
+            await message.author.edit(nick=nname)
         except discord.Forbidden:
             pass
         if i_is:
-            await BOT.client.send_message(message.channel, f"Yes, you are {name}")
+            await message.channel.send(f"Yes, you are {name}")
             return
 
-        await BOT.client.send_message(message.channel, f"Hi {name}, I'm Danni")
+        await message.channel.send(f"Hi {name}, I'm Danni")
         return
 
     if message.content.lower() == 'owo' and message.author.id == '225711751071662082':
-        await BOT.client.send_file(message.channel, 'tove.jpg')
+        await message.channel.send(file=discord.File('tove.jpg', 'tove.jpg'))
 
     if message.content == '!restartbot':
-        await BOT.client.send_message(message.channel, 'Rebooting!')
+        await message.channel.send('Rebooting!')
         await BOT.client.logout()
         sys.exit()
 
     if message.content == '!meow':
-        await BOT.client.send_message(message.channel, 'No you')
+        await message.channel.send('No you')
+
+    if message.content == 'yeet':
+        yeet = BOT.get_yeet()
+        if yeet:
+            await message.add_reaction(yeet)
 
     diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
     if diff > 0:
-        await BOT.client.send_message(message.channel, 'meow')
+        await message.channel.send('meow')
         t = datetime.timedelta(days=random.randrange(2,7), hours=random.randrange(6,23))
         BOT.next_meow = datetime.datetime.now() + t
         return
@@ -101,13 +118,22 @@ def make_positive(nname: str) -> str:
 @BOT.client.event
 async def on_ready() -> None:
     print('Logged in as {username} ({id})'.format(username=BOT.client.user.name, id=BOT.client.user.id))
-    print('Connected to {0}'.format(', '.join([server.name for server in BOT.client.servers])))
+    print('Connected to {0}'.format(', '.join([server.name for server in BOT.client.guilds])))
     print('--------')
 
 
 @BOT.client.event
-async def on_server_join(server: discord.Server) -> None:
-    await BOT.client.send_message(server.default_channel, "Hi everyone! I'm a terrible idea given form")
+async def on_guild_join(guild: discord.Guild) -> None:
+    await guild.default_channel.send("Hi everyone! I'm a terrible idea given form")
+
+@BOT.client.event
+async def on_reaction_add(reaction: Reaction, author: User) -> None:
+        c = reaction.count
+        if reaction.me:
+            c = c - 1
+        if reaction.message.author == BOT.client.user:
+            if c > 0 and not reaction.custom_emoji and reaction.emoji == "❎":
+                await reaction.message.delete()
 
 def init() -> None:
     BOT.init()
