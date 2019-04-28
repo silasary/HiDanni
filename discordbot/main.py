@@ -6,9 +6,7 @@ from typing import Dict
 
 import discord
 from discord.errors import Forbidden
-from discord.message import Message
-from discord.reaction import Reaction
-from discord.user import User
+from discord import Emoji, Message, Reaction, User
 
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
@@ -24,7 +22,7 @@ class Bot:
     def init(self) -> None:
         self.client.run(configuration.get('token'))
 
-    def get_yeet(self) -> Reaction:
+    def get_yeet(self) -> Emoji:
         yeets = []
         for emoji in self.client.emojis:
             if emoji.name.startswith('yeet'):
@@ -32,7 +30,6 @@ class Bot:
         if not yeets:
             return None
         random.shuffle(yeets)
-        print(yeets)
         return yeets[0]
 
 BOT = Bot()
@@ -96,7 +93,7 @@ async def on_message(message: Message) -> None:
     if message.content == 'yeet':
         yeet = BOT.get_yeet()
         if yeet:
-            await message.add_reaction(yeet)
+            await message.channel.send(str(yeet))
 
     diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
     if diff > 0:
