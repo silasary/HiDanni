@@ -5,8 +5,8 @@ import sys
 from typing import Dict
 
 import discord
-from discord.errors import Forbidden
 from discord import Emoji, Message, Reaction, User
+from discord.errors import Forbidden
 
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
@@ -79,7 +79,7 @@ async def on_message(message: Message) -> None:
         await message.channel.send(f"Hi {name}, I'm Danni")
         return
 
-    if message.content.lower() == 'owo' and message.author.id == '225711751071662082':
+    if message.content.lower() == 'owo' and message.author.id == 225711751071662082:
         await message.channel.send(file=discord.File('tove.jpg', 'tove.jpg'))
 
     if message.content == '!restartbot':
