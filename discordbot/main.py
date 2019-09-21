@@ -1,4 +1,5 @@
 import datetime
+import os
 import random
 import re
 import sys
@@ -7,6 +8,7 @@ from typing import Dict
 import discord
 from discord import Emoji, Message, Reaction, User
 from discord.errors import Forbidden
+import requests
 
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
@@ -45,6 +47,7 @@ REGEX_SUPERLATIVE = r'((very|really|super) ?)*'
 
 @BOT.client.event
 async def on_message(message: Message) -> None:
+    await slurp_emoji(message)
     if message.author == BOT.client.user:
         return
     m = re.search(REGEX_IM, message.clean_content, re.IGNORECASE)
@@ -90,7 +93,7 @@ async def on_message(message: Message) -> None:
     if message.content == '!meow':
         await message.channel.send('No you')
 
-    if message.content == 'yeet':
+    if message.content.lower() == 'yeet':
         yeet = BOT.get_yeet()
         if yeet:
             await message.channel.send(str(yeet))
@@ -131,6 +134,26 @@ async def on_reaction_add(reaction: Reaction, author: User) -> None:
         if reaction.message.author == BOT.client.user:
             if c > 0 and not reaction.custom_emoji and reaction.emoji == "❎":
                 await reaction.message.delete()
+
+@BOT.client.event
+async def on_member_update(before: discord.Member, after: discord.Member) -> None:
+
+    pass
+
+async def slurp_emoji(message: Message) -> None:
+    emoji = re.findall(r'<:([^\d>]+):(\w+)>', message.content)
+    print(repr(emoji))
+    if not os.path.exists('emoji'):
+        os.mkdir('emoji')
+    for e in emoji:
+        name = e[0]
+        e_id = e[1]
+        path = os.path.join('emoji', name + '.png')
+        if not os.path.exists(path):
+            response = requests.get(f'https://cdn.discordapp.com/emojis/{e_id}.png')
+            with open(path, mode='wb') as fout:
+                for chunk in response.iter_content(1024):
+                    fout.write(chunk)
 
 def init() -> None:
     BOT.init()
