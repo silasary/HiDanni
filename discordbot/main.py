@@ -6,9 +6,9 @@ import sys
 from typing import Dict
 
 import discord
-from discord import Emoji, Message, Reaction, User
-from discord.errors import Forbidden
 import requests
+from discord import Emoji, Message, Reaction, TextChannel, User, Webhook
+from discord.errors import Forbidden
 
 from shared import configuration
 from shared.limited_dict import LimitedSizeDict
@@ -18,6 +18,7 @@ class Bot:
     def __init__(self) -> None:
         self.client = discord.Client()
         self.cache: Dict[User, str] = LimitedSizeDict(size_limit=500)
+        self.owos: Dict[User, float] = LimitedSizeDict(size_limit=500)
         t = datetime.timedelta(hours=2)
         self.next_meow = datetime.datetime.now() + t
 
@@ -50,6 +51,58 @@ async def on_message(message: Message) -> None:
     await slurp_emoji(message)
     if message.author == BOT.client.user:
         return
+
+    if await process_im(message):
+        return
+
+    if message.author.bot:
+        return
+
+    if message.content.lower() == 'owo' and message.author.id == 225711751071662082:
+        await message.channel.send(file=discord.File('tove.jpg', 'tove.jpg'))
+
+    if message.content == '!restartbot':
+        await message.channel.send('Rebooting!')
+        await BOT.client.logout()
+        sys.exit()
+
+    if message.content == '!meow':
+        await message.channel.send('no u')
+
+    if message.content.lower() == 'yeet':
+        yeet = BOT.get_yeet()
+        if yeet:
+            await message.channel.send(str(yeet))
+
+    diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
+    if diff > 0:
+        await message.channel.send('meow')
+        t = datetime.timedelta(days=random.randrange(2,7), hours=random.randrange(6,23))
+        BOT.next_meow = datetime.datetime.now() + t
+        return
+
+    if 'owo' in message.content.lower():
+        BOT.owos[message.author] = datetime.datetime.now().timestamp()
+        return
+
+    # make sure the furry talks like a furry
+    last_owo = BOT.owos.get(message.author, 0)
+
+    diff = datetime.datetime.now().timestamp() - last_owo
+    if diff < 300: # five minutes
+        await impersonate(message.author, message.channel, translate_furry(message.content))
+        await message.delete()
+
+
+    if message.content.startswith('!test'):
+        await impersonate(message.author, message.channel, message.content[6:])
+        await message.delete()
+
+
+def translate_furry(input: str) -> str:
+    return input.lower().replace('r', 'w').replace('l', 'w').replace(",","~").replace(";","~")
+
+async def process_im(message: Message) -> bool:
     m = re.search(REGEX_IM, message.clean_content, re.IGNORECASE)
     if not m:
         m = re.search(REGEX_IM, BOT.cache.get(message.author, '') + ' ' + message.clean_content, re.IGNORECASE)
@@ -77,33 +130,11 @@ async def on_message(message: Message) -> None:
             pass
         if i_is:
             await message.channel.send(f"Yes, you are {name}")
-            return
+            return True
 
         await message.channel.send(f"Hi {name}, I'm Danni")
-        return
-
-    if message.content.lower() == 'owo' and message.author.id == 225711751071662082:
-        await message.channel.send(file=discord.File('tove.jpg', 'tove.jpg'))
-
-    if message.content == '!restartbot':
-        await message.channel.send('Rebooting!')
-        await BOT.client.logout()
-        sys.exit()
-
-    if message.content == '!meow':
-        await message.channel.send('No you')
-
-    if message.content.lower() == 'yeet':
-        yeet = BOT.get_yeet()
-        if yeet:
-            await message.channel.send(str(yeet))
-
-    diff = datetime.datetime.now().timestamp() - BOT.next_meow.timestamp()
-    if diff > 0:
-        await message.channel.send('meow')
-        t = datetime.timedelta(days=random.randrange(2,7), hours=random.randrange(6,23))
-        BOT.next_meow = datetime.datetime.now() + t
-        return
+        return True
+    return False
 
 def make_positive(nname: str) -> str:
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'not cute', 'really cute', nname, flags=re.I)
@@ -114,6 +145,16 @@ def make_positive(nname: str) -> str:
     nname = re.sub(r'^' + REGEX_SUPERLATIVE + r'useless', 'valuable', nname, flags=re.I)
 
     return nname
+
+async def get_webhook(channel: TextChannel) -> Webhook:
+    for wh in await channel.guild.webhooks():
+        if wh.user == BOT.client.user:
+            return wh
+    return await channel.create_webhook(name='Proxy')
+
+async def impersonate(user: User, channel: TextChannel, content: str) -> None:
+    hook = await get_webhook(channel)
+    await hook.send(content, username=user.name, avatar_url=str(user.avatar_url))
 
 @BOT.client.event
 async def on_ready() -> None:
