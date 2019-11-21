@@ -93,14 +93,11 @@ async def on_message(message: Message) -> None:
         await impersonate(message.author, message.channel, translate_furry(message.content))
         await message.delete()
 
-
-    if message.content.startswith('!test'):
-        await impersonate(message.author, message.channel, message.content[6:])
-        await message.delete()
-
-
 def translate_furry(input: str) -> str:
     return input.lower().replace('r', 'w').replace('l', 'w').replace(",","~").replace(";","~")
+
+
+
 
 async def process_im(message: Message) -> bool:
     m = re.search(REGEX_IM, message.clean_content, re.IGNORECASE)
@@ -147,7 +144,7 @@ def make_positive(nname: str) -> str:
     return nname
 
 async def get_webhook(channel: TextChannel) -> Webhook:
-    for wh in await channel.guild.webhooks():
+    for wh in await channel.webhooks():
         if wh.user == BOT.client.user:
             return wh
     return await channel.create_webhook(name='Proxy')
